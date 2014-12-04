@@ -28,6 +28,7 @@ private:
   template <typename T>
   static SymbolT const* arrayOfCustom(T const& custom);
 
+  NFA<SymbolT>& _nfa;
   NFASimulator<SymbolT> _simulator;
 };
 
