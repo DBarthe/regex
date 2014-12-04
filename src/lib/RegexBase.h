@@ -8,16 +8,16 @@
 template <typename SymbolT>
 class RegexBase {
 public:
-  RegexBase(SymbolT const* expr);
+  RegexBase(SymbolT const* expr) {}
 
   template <typename T>
   RegexBase(T const& customExpr)
   : RegexBase(arrayOfCustom(customExpr)) {
   }
 
-  ~RegexBase() = default;
+  ~RegexBase() { delete &_nfa; }
 
-  bool match(SymbolT const* input);
+  bool match(SymbolT const* input) {}
 
   template <typename T>
   bool match(T const& customInput) {
@@ -26,9 +26,9 @@ public:
 
 private:
   template <typename T>
-  static SymbolT const* arrayOfCustom(T const& custom);
+  static SymbolT const* arrayOfCustom(T const& custom) { return nullptr; }
 
-  NFA<SymbolT>& _nfa;
+  NFA<SymbolT>& _nfa = *new NFA<SymbolT>;
   NFASimulator<SymbolT> _simulator;
 };
 
