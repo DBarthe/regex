@@ -6,12 +6,13 @@
 template <typename SymbolT>
 class NFABuilder {
 public:
-  NFABuilder() = default;
-  virtual ~NFABuilder() = default;
+  NFABuilder(SymbolT const* expr) = default;
+  ~NFABuilder() = default;
 
-  virtual bool build(SymbolT const* expr) = 0;
-  virtual NFA<SymbolT>& getResult() = 0;
-  virtual NFA<SymbolT> const& getResult() const;
+  NFA<SymbolT>& collect();
+
+private:
+  NFA<SymbolT>* _nfa = nullptr;
 };
 
 #endif // NFA_BUILDER_H
