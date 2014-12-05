@@ -29,7 +29,7 @@ LIB_SHARED_TARGET = libregex.so
 LIB_STATIC_TARGET = libregex.a
 LIB_TARGET = $(LIB_STATIC_TARGET) $(LIB_SHARED_TARGET)
 
-PROGRAM_TARGET = regex
+PROGRAM_TARGET = match
 
 TEST_TARGET = test-regex
 
@@ -37,7 +37,7 @@ ALL_TARGET = $(LIB_TARGET) $(PROGRAM_TARGET) $(TEST_TARGET)
 
 # sources
 LIB_SRCDIR = src/lib
-PROGRAM_SRCDIR = src/program
+PROGRAM_SRCDIR = src/bin
 TEST_SRCDIR = src/test
 
 LIB_SRC = $(wildcard $(LIB_SRCDIR)/*.cpp)
