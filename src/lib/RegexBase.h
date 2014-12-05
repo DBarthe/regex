@@ -11,9 +11,7 @@ class RegexBase
 public:
   RegexBase(SymbolT const* expr) :
     _builder(expr)
-  {
-    _builder.collect().show();
-  }
+  {}
 
   template <typename T>
   RegexBase(T const& customExpr) :

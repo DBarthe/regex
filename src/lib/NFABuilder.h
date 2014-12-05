@@ -11,11 +11,32 @@ template <typename SymbolT>
 class NFABuilder
 {
 private:
+
+  enum TokenLabel
+  {
+    TOK_STAR,
+    TOK_OR,
+    TOK_OPARENTH,
+    TOK_CPARENTH,
+    TOK_CONCAT,
+    TOK_END,
+    TOK_LAMBDA
+  };
+
+  struct Token
+  {
+    Token(TokenLabel _label, SymbolT _value=Lexemes<SymbolT>::endSymbol) :
+      label(_label), value(_value)
+    {}
+
+    TokenLabel label;
+    SymbolT value;
+  };
+
   NFA<SymbolT> _nfa;
 
   struct Workspace
   {
-    Workspace(SymbolT const* _expr) : expr(_expr) {}
     ~Workspace()
     {
       while (!nfaStack.empty())
@@ -25,9 +46,9 @@ private:
       }
     }
 
-    std::stack<SymbolT> operatorStack;
+    std::stack<Token> operatorStack;
     std::stack<NFA<SymbolT>*> nfaStack;
-    SymbolT const* expr;
+    std::vector<Token> tokens;
     size_t index;
   };
 
@@ -53,7 +74,7 @@ private:
     _workspace->nfaStack.push(&nfa);
   }
 
-  SymbolT _popOperator()
+  Token _popOperator()
   {
     if (_workspace->operatorStack.empty())
     {
@@ -61,13 +82,13 @@ private:
     }
     else
     {
-      SymbolT op = _workspace->operatorStack.top();
+      Token op = _workspace->operatorStack.top();
       _workspace->operatorStack.pop();
       return op;
     }
   }
 
-  void _pushOperator(SymbolT op)
+  void _pushOperator(Token op)
   {
     _workspace->operatorStack.push(op);
   }
@@ -112,6 +133,15 @@ private:
     return result;
   }
 
+  NFA<SymbolT>& _concatInduction(NFA<SymbolT>& left, NFA<SymbolT>& right)
+  {
+    auto newInitial = right.addState();
+    right.insert(left, newInitial, right.getInitial());
+    right.replaceInitial(newInitial);
+    delete &left;
+    return right;
+  }
+
   NFA<SymbolT>& _baseCase(SymbolT symbol) const
   {
     auto& result = *new NFA<SymbolT>;
@@ -121,41 +151,64 @@ private:
     return result;
   }
 
+  void _maybePushConcat()
+  {
+    switch (_next().label)
+    {
+      case TOK_LAMBDA:
+      case TOK_OPARENTH:
+        _pushOperator(Token(TOK_CONCAT));  
+      default:;
+    }
+  }
+
   void _treatStar()
   {
     NFA<SymbolT>& operand = _popNFA();
     NFA<SymbolT>& result = _starInduction(operand);
     _pushNFA(result);
+    _maybePushConcat();
   }
 
   void _treatOr()
   {
-    _pushOperator(Lexemes<SymbolT>::orSymbol);
+    _pushOperator(Token(TOK_OR));
   }
 
   void _treatOpenParenth()
   {
-    _pushOperator(Lexemes<SymbolT>::openParenthSymbol);
+    _pushOperator(Token(TOK_OPARENTH));
   }
 
-
   void _treatStackedOperators(
-    std::function<SymbolT ()> succFunc)
+    std::function<TokenLabel ()> succFunc)
   {
-    SymbolT op;
+    TokenLabel label ;
 
-    while ((op = succFunc()) != Lexemes<SymbolT>::endSymbol)
+    while ((label = succFunc()) != TOK_END)
     {
-      if (op == Lexemes<SymbolT>::orSymbol)
+      switch (label)
       {
-        NFA<SymbolT>& rOperand = _popNFA();
-        NFA<SymbolT>& lOperand = _popNFA();
-        NFA<SymbolT>& result = _orInduction(lOperand, rOperand);
-        _pushNFA(result); 
-      }
-      else
-      {
-        assert(false); // unreachable, that's a bug otherwise
+        case TOK_OR:
+        {
+          NFA<SymbolT>& rOperand = _popNFA();
+          NFA<SymbolT>& lOperand = _popNFA();
+          NFA<SymbolT>& result = _orInduction(lOperand, rOperand);
+          _pushNFA(result);
+        }
+        break;
+  
+        case TOK_CONCAT:
+        {
+          NFA<SymbolT>& rOperand = _popNFA();
+          NFA<SymbolT>& lOperand = _popNFA();
+          NFA<SymbolT>& result = _concatInduction(lOperand, rOperand);
+          _pushNFA(result);
+        }
+        break;
+
+        default:
+          throw std::invalid_argument ("NFABuilder: syntax error");
       }
     }
   }
@@ -164,27 +217,36 @@ private:
   {
     _treatStackedOperators(
       [this]() {
-        SymbolT op = _popOperator();
-        return op == Lexemes<SymbolT>::openParenthSymbol
-          ? Lexemes<SymbolT>::endSymbol
-          : op;
+        Token op = _popOperator();
+        return op.label == TOK_OPARENTH
+          ? TOK_END
+          : op.label;
       });
+    _maybePushConcat();
   }
 
   void _treatLambda()
   {
-    NFA<SymbolT>& simpleNFA = _baseCase(_current());
+    NFA<SymbolT>& simpleNFA = _baseCase(_current().value);
     _pushNFA(simpleNFA);
+    _maybePushConcat();
   }
 
-  SymbolT _current() const
+  Token _current() const
   {
-    return _workspace->expr[_workspace->index];
+    return _workspace->tokens[_workspace->index];
+  }
+
+  Token _next() const
+  {
+    return _ended()
+      ? _current()
+      :  _workspace->tokens[_workspace->index+1];
   }
 
   bool _ended() const
   {
-    return _current() == Lexemes<SymbolT>::endSymbol;
+    return _current().label == TOK_END;
   }
 
   void _forward()
@@ -199,27 +261,14 @@ private:
 
   void _shunt()
   {
-    SymbolT current = _current();
-
-    if (current == Lexemes<SymbolT>::starSymbol)
+    switch (_current().label)
     {
-      _treatStar();
-    }
-    else if (current == Lexemes<SymbolT>::orSymbol)
-    {
-      _treatOr();
-    }
-    else if (current == Lexemes<SymbolT>::openParenthSymbol)
-    {
-      _treatOpenParenth();
-    }
-    else if (current == Lexemes<SymbolT>::closeParenthSymbol)
-    {
-      _treatCloseParenth();
-    }
-    else
-    {
-      _treatLambda();
+      case TOK_STAR:      _treatStar();         break;
+      case TOK_OR:        _treatOr();           break;
+      case TOK_OPARENTH:  _treatOpenParenth();  break;
+      case TOK_CPARENTH:  _treatCloseParenth(); break;
+      case TOK_LAMBDA:    _treatLambda();       break;
+      default:;
     }
   }
 
@@ -229,11 +278,11 @@ private:
       [this]() {
         if (_workspace->operatorStack.empty())
         {
-          return Lexemes<SymbolT>::endSymbol;
+          return TOK_END;
         }
         else
         {
-          return _popOperator();
+          return _popOperator().label;
         }
       });
   }
@@ -251,8 +300,52 @@ private:
     }
   }
 
-  void _build()
+  static size_t _exprSize(SymbolT const* expr)
   {
+    size_t len = 0;
+    while (expr[len] != Lexemes<SymbolT>::endSymbol)
+    {
+      len++;
+    }
+    return len;
+  }
+
+  void _tokenize(SymbolT const* expr)
+  {
+    _workspace->tokens.reserve(_exprSize(expr) + 1);
+
+    for (size_t i = 0; expr[i] != Lexemes<SymbolT>::endSymbol; i++)
+    {
+      SymbolT current = expr[i];
+      TokenLabel label;
+      if (current == Lexemes<SymbolT>::starSymbol)
+      {
+        label = TOK_STAR;
+      }
+      else if (current == Lexemes<SymbolT>::orSymbol)
+      {
+        label = TOK_OR;
+      }
+      else if (current == Lexemes<SymbolT>::openParenthSymbol)
+      {
+        label = TOK_OPARENTH;
+      }
+      else if (current == Lexemes<SymbolT>::closeParenthSymbol)
+      {
+        label = TOK_CPARENTH;
+      }
+      else
+      {
+        label = TOK_LAMBDA;
+      }
+      _workspace->tokens.emplace_back(label, current);
+    }
+    _workspace->tokens.emplace_back(TOK_END);
+  }
+
+  void _build(SymbolT const* expr)
+  {
+    _tokenize(expr);
     for (_start(); !_ended(); _forward())
     {
       _shunt();
@@ -263,11 +356,11 @@ private:
 
 public:
   NFABuilder(SymbolT const* expr) :
-    _nfa(), _workspace(new Workspace(expr))
+    _nfa(), _workspace(new Workspace())
   {
     try
     {
-      _build();
+      _build(expr);
       delete _workspace;
       _workspace = nullptr;
     }
