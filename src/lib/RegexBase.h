@@ -10,7 +10,6 @@ class RegexBase {
 public:
   RegexBase(SymbolT const* expr)
   {
-    _nfa.transitions(0, *expr);
   }
 
   template <typename T>

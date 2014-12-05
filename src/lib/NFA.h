@@ -79,6 +79,15 @@ public:
     assert (id == _initialState); 
   }
 
+  NFA(NFA const& other) :
+    _initialState(other._initialState),
+    _nextState(other._nextState),
+    _acceptorSet(other._acceptorSet),
+    _transTable(other._transTable),
+    _emptyConstSet(other._emptyConstSet)
+  {
+  }
+
   ~NFA()
   {
     // nothing to delete since all containers are filled with 'emplace'
@@ -194,14 +203,23 @@ public:
       for (auto& pair : clone)
       {
         // in epsilon transitions
+        StateSet tmpSet;
         for (auto& id : pair.first)
         {
-          id += _nextState;
+          tmpSet.insert(id + _nextState);
         }
+        pair.first = tmpSet;
+
         // in symbol transitions
-        for (auto& innerPair : pair.first)
+        for (auto& innerPair : pair.second)
         {
-          innerPair.id += _nextState;
+          // for each symbol
+          StateSet tmpSet;
+          for (auto& id : innerPair.second)
+          {
+            tmpSet.insert(id + _nextState);
+          }
+          innerPair.second = tmpSet;
         }
       }
 
@@ -300,7 +318,7 @@ public:
     }
     else
     {
-      return _transTable[id].second;
+      return _transTable[id].first;
     }
   }
 };
