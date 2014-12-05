@@ -91,6 +91,8 @@ void testNFA()
   assert(nfa.transitions(0, 'a').count(id) == 1);
   assert(nfa.transitions(0, 'a').count(id2) == 1);
 
+  nfa.clearAcceptorSet();
+  assert(nfa.getAcceptorSet().size() == 0);
 
   // insert
   NFA<char> root;
@@ -118,7 +120,6 @@ void testNFA()
     );
   }
 }
-
 
 
 int main(int argc, char const *argv[])
