@@ -133,6 +133,11 @@ public:
     return _exists(id) && _isElement(_acceptorSet, id);
   }
 
+  void clearAcceptorSet()
+  {
+    _acceptorSet.clear();
+  }
+
   StateId getInitial() const
   {
     return _initialState;
@@ -242,6 +247,13 @@ public:
       }
     }
   }
+
+
+  void hook(NFA const& other, StateId hookPoint)
+  {
+
+  }
+
 
   // methods that search and return state's subset
   StateSet& epsilonClosure(StateId id) const
