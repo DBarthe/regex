@@ -1,5 +1,5 @@
 #include "Regex.h"
-#include "NFABuilder.h"
+#include "Lexemes.h"
 
 template<>
 template<>
@@ -9,15 +9,15 @@ char const* Regex::arrayOfCustom(std::string const&)
 }
 
 template<>
-char const NFABuilder<char>::_starSymbol = '*';
+char const Lexemes<char>::starSymbol = '*';
 template<>
-char const NFABuilder<char>::_orSymbol = '|';
+char const Lexemes<char>::orSymbol = '|';
 template<>
-char const NFABuilder<char>::_openParenthSymbol = '(';
+char const Lexemes<char>::openParenthSymbol = '(';
 template<>
-char const NFABuilder<char>::_closeParenthSymbol = ')';
+char const Lexemes<char>::closeParenthSymbol = ')';
 template<>
-char const NFABuilder<char>::_endSymbol = '\0';
+char const Lexemes<char>::endSymbol = '\0';
 
 template<>
 template<>
@@ -27,12 +27,12 @@ wchar_t const* WRegex::arrayOfCustom(std::wstring const&)
 }
 
 template<>
-wchar_t const NFABuilder<wchar_t>::_starSymbol = '*';
+wchar_t const Lexemes<wchar_t>::starSymbol = '*';
 template<>
-wchar_t const NFABuilder<wchar_t>::_orSymbol = '|';
+wchar_t const Lexemes<wchar_t>::orSymbol = '|';
 template<>
-wchar_t const NFABuilder<wchar_t>::_openParenthSymbol = '(';
+wchar_t const Lexemes<wchar_t>::openParenthSymbol = '(';
 template<>
-wchar_t const NFABuilder<wchar_t>::_closeParenthSymbol = ')';
+wchar_t const Lexemes<wchar_t>::closeParenthSymbol = ')';
 template<>
-wchar_t const NFABuilder<wchar_t>::_endSymbol = '\0';
+wchar_t const Lexemes<wchar_t>::endSymbol = '\0';

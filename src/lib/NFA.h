@@ -10,13 +10,16 @@
 #include <utility>
 #include <initializer_list>
 #include <algorithm>
+#include <iostream>
+
+typedef unsigned int StateId;
+typedef std::set<StateId> StateSet;
 
 template <typename SymbolT>
-class NFA {
+class NFA
+{
 public:
   // public types
-  typedef unsigned int StateId;
-  typedef std::set<StateId> StateSet;
 
 private:
   // private types
@@ -95,6 +98,11 @@ public:
 
   // Getters, setters, isers.
   
+  size_t size() const
+  {
+    return static_cast<size_t> (_nextState);
+  }
+
   StateSet const& getAcceptorSet() const
   {
     return _acceptorSet;
@@ -248,13 +256,6 @@ public:
     }
   }
 
-
-  void hook(NFA const& other, StateId hookPoint)
-  {
-
-  }
-
-
   // methods that search and return state's subset
   StateSet& epsilonClosure(StateId id) const
   {
@@ -333,6 +334,43 @@ public:
       return _transTable[id].first;
     }
   }
+
+
+private:
+  static void _showSet(StateSet const& set)
+  {
+    for (auto state : set)
+    {
+      std::cout << ' ' << state;
+    }
+    std::cout << std::endl;
+  }
+
+public:
+  void show() const
+  {
+    std::cout << "State number: " << size() << std::endl;
+    std::cout << "Initial state: " << getInitial() << std::endl;
+    std::cout << "Acceptors:";
+    _showSet(getAcceptorSet());
+    std::cout << "Transitions:" << std::endl;
+    StateId id = 0;
+    for (auto const& pair : _transTable)
+    {
+      std::cout << "---------------------" << std::endl;
+      std::cout << "id: " << id << std::endl;
+      std::cout << "epsilons:";
+      _showSet(pair.first);
+
+      for (auto const& innerPair : pair.second)
+      {
+        std::cout << innerPair.first << ':';
+        _showSet(innerPair.second);
+      }
+      id++;
+    }
+  }
+
 };
 
 #endif // NFA_H

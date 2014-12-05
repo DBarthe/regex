@@ -6,11 +6,14 @@
 #include "NFASimulator.h"
 
 template <typename SymbolT>
-class RegexBase {
+class RegexBase
+{
 public:
   RegexBase(SymbolT const* expr) :
     _builder(expr)
-  {}
+  {
+    _builder.collect().show();
+  }
 
   template <typename T>
   RegexBase(T const& customExpr) :
@@ -19,10 +22,14 @@ public:
 
   ~RegexBase() = default;
 
-  bool match(SymbolT const* input) {}
+  bool match(SymbolT const* input) const
+  {
+    NFASimulator<SymbolT> simulator;
+    return simulator.simulate(_builder.collect(), input);
+  }
 
   template <typename T>
-  bool match(T const& customInput) {
+  bool match(T const& customInput) const {
     return match(arrayOfCustom(customInput));
   }
 
@@ -31,7 +38,6 @@ private:
   static SymbolT const* arrayOfCustom(T const& custom) { return nullptr; }
 
   NFABuilder<SymbolT> _builder;
-  NFASimulator<SymbolT> _simulator;
 };
 
 #endif // REGEX_BASE_H

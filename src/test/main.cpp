@@ -22,7 +22,7 @@ void testNFA()
   assert(nfa.epsilonClosure(0).count(0) == 1);
 
   // add transition
-  NFA<char>::StateId id = nfa.addState();
+  auto id = nfa.addState();
   assert(nfa.isInitial(id) == false);
   assert(nfa.isAcceptor(id) == false);
 
@@ -61,7 +61,7 @@ void testNFA()
   assert(nfa.epsilonClosure(0).count(0) == 1);
   assert(nfa.epsilonClosure(0).count(id) == 1);
 
-  NFA<char>::StateId id2 = nfa.addState();
+  auto id2 = nfa.addState();
   nfa.addEpsilonTransition(id, id2);
 
   assert(nfa.epsilonClosure(0).size() == 3);
@@ -96,7 +96,7 @@ void testNFA()
 
   // insert
   NFA<char> root;
-  NFA<char>::StateId acceptorId = root.addState();
+  auto acceptorId = root.addState();
   root.setAcceptor(acceptorId);
 
   NFA<char> left(root);

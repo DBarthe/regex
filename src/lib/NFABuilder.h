@@ -5,6 +5,7 @@
 #include <stdexcept>
 
 #include "NFA.h"
+#include "Lexemes.h"
 
 template <typename SymbolT>
 class NFABuilder
@@ -32,14 +33,7 @@ private:
 
   Workspace* _workspace;
 
-  static SymbolT const _starSymbol;
-  static SymbolT const _orSymbol;
-  static SymbolT const _openParenthSymbol;
-  static SymbolT const _closeParenthSymbol;
-  static SymbolT const _endSymbol;
-
 private:
-
   NFA<SymbolT>& _popNFA()
   {
     if (_workspace->nfaStack.empty())
@@ -136,12 +130,12 @@ private:
 
   void _treatOr()
   {
-    _pushOperator(_orSymbol);
+    _pushOperator(Lexemes<SymbolT>::orSymbol);
   }
 
   void _treatOpenParenth()
   {
-    _pushOperator(_openParenthSymbol);
+    _pushOperator(Lexemes<SymbolT>::openParenthSymbol);
   }
 
 
@@ -150,9 +144,9 @@ private:
   {
     SymbolT op;
 
-    while ((op = succFunc()) != _endSymbol)
+    while ((op = succFunc()) != Lexemes<SymbolT>::endSymbol)
     {
-      if (op == _orSymbol)
+      if (op == Lexemes<SymbolT>::orSymbol)
       {
         NFA<SymbolT>& rOperand = _popNFA();
         NFA<SymbolT>& lOperand = _popNFA();
@@ -171,7 +165,9 @@ private:
     _treatStackedOperators(
       [this]() {
         SymbolT op = _popOperator();
-        return op == _openParenthSymbol ? _endSymbol : op;
+        return op == Lexemes<SymbolT>::openParenthSymbol
+          ? Lexemes<SymbolT>::endSymbol
+          : op;
       });
   }
 
@@ -188,7 +184,7 @@ private:
 
   bool _ended() const
   {
-    return _current() == _endSymbol;
+    return _current() == Lexemes<SymbolT>::endSymbol;
   }
 
   void _forward()
@@ -205,19 +201,19 @@ private:
   {
     SymbolT current = _current();
 
-    if (current == _starSymbol)
+    if (current == Lexemes<SymbolT>::starSymbol)
     {
       _treatStar();
     }
-    else if (current == _orSymbol)
+    else if (current == Lexemes<SymbolT>::orSymbol)
     {
       _treatOr();
     }
-    else if (current == _openParenthSymbol)
+    else if (current == Lexemes<SymbolT>::openParenthSymbol)
     {
       _treatOpenParenth();
     }
-    else if (current == _closeParenthSymbol)
+    else if (current == Lexemes<SymbolT>::closeParenthSymbol)
     {
       _treatCloseParenth();
     }
@@ -233,7 +229,7 @@ private:
       [this]() {
         if (_workspace->operatorStack.empty())
         {
-          return _endSymbol;
+          return Lexemes<SymbolT>::endSymbol;
         }
         else
         {
@@ -244,6 +240,7 @@ private:
 
   void _finalNFAConcat()
   {
+    _nfa.setAcceptor(_nfa.getInitial());
     while (!_workspace->nfaStack.empty())
     {
       auto& current = _popNFA();
