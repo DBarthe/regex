@@ -8,7 +8,10 @@
 template <typename SymbolT>
 class RegexBase {
 public:
-  RegexBase(SymbolT const* expr) {}
+  RegexBase(SymbolT const* expr)
+  {
+    _nfa.transitions(0, *expr);
+  }
 
   template <typename T>
   RegexBase(T const& customExpr)

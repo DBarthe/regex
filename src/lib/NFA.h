@@ -37,6 +37,8 @@ private:
   StateSet _acceptorSet;
   _TransitionTable _transTable;
 
+  StateSet const _emptyConstSet;
+
 private:
   // privates methods
   void _maybeIncreaseCapacity()
@@ -52,7 +54,7 @@ private:
     _transTable.reserve(newCapacity);
   }
 
-  void _exists(StateId id)
+  bool _exists(StateId id) const
   {
     return id < _nextState;
   }
@@ -69,7 +71,8 @@ public:
     _initialState(0),
     _nextState(0),
     _acceptorSet(),
-    _transTable()
+    _transTable(),
+    _emptyConstSet()
   {
     StateId id = addState();
     // ensure the first added state is the initial, at start.
@@ -265,9 +268,41 @@ public:
     return resultSet;
   }
 
-  StateSet const& transition(StateId id, SymbolT symbol) const;
-  StateSet const& epsilonTransition(StateId id) const;
+  StateSet const& transitions(StateId id, SymbolT symbol) const
+  {
+    assert (_exists(id));
 
+    if (!_exists(id))
+    {
+      return _emptyConstSet;
+    }
+    else
+    {
+      auto const& it = _transTable[id].second.find(symbol);
+      if (it == _transTable[id].second.end())
+      {
+        return _emptyConstSet;
+      }
+      else
+      {
+        return it->second;
+      }
+    }
+  }
+
+  StateSet const& epsilonTransitions(StateId id) const
+  {
+    assert(_exists(id));
+
+    if (!_exists(id))
+    {
+      return _emptyConstSet;
+    }
+    else
+    {
+      return _transTable[id].second;
+    }
+  }
 };
 
 #endif // NFA_H
