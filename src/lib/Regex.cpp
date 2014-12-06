@@ -24,9 +24,9 @@
 
 template<>
 template<>
-char const* Regex::arrayOfCustom(std::string const&)
+char const* Regex::arrayOfCustom(std::string const& str)
 {
-  return nullptr;
+  return str.c_str();
 }
 
 template<>
@@ -42,9 +42,9 @@ char const Lexemes<char>::endSymbol = '\0';
 
 template<>
 template<>
-wchar_t const* WRegex::arrayOfCustom(std::wstring const&)
+wchar_t const* WRegex::arrayOfCustom(std::wstring const& str)
 {
-  return nullptr;
+  return str.c_str();
 }
 
 template<>
