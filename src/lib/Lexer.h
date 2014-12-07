@@ -31,11 +31,33 @@ class Lexer
 private:
   typedef Token<SymbolT> Token;
 
+public:
+  Lexer(SymbolT const* input, std::list<Token>& output) :
+    _input(input), _tokenList(output)
+  {
+    _tokenize();
+  }
+
+  Lexer(SymbolT const* input) :
+    Lexer(input, *new std::list<Token>)
+  {}
+
+  std::list<Token> const& collect() const
+  {
+    return _tokenList;
+  }
+
+  std::list<Token>& collect()
+  {
+    return _tokenList;
+  }
+
+private:
   SymbolT const* _input;
-  std::list<Token> _tokenList;
+  std::list<Token>& _tokenList;
   size_t _index = 0;
   bool _ended = false;
-
+  
 private:
   SymbolT _current() const
   {
@@ -80,9 +102,10 @@ private:
 
   void _maybeAddConcat()
   {
-    if ( _tokenList.back() == Token::LAMBDA
-      || _tokenList.back() == Token::STAR
-      || _tokenList.back() == Token::RIGHT_PARENTH)
+    typename Token::Label label = _tokenList.back().getLabel();
+
+    if ( label == Token::LAMBDA || label == Token::STAR
+                                || label == Token::RIGHT_PARENTH)
     { 
       _product(Token::CONCAT);
     }
@@ -97,7 +120,7 @@ private:
       _product(Token::END);
       _ended = true;
     }
-    if (sym == Lexemes<SymbolT>::STAR)
+    else if (sym == Lexemes<SymbolT>::STAR)
     {
       _product(Token::STAR);
     }
@@ -119,25 +142,15 @@ private:
       _maybeAddConcat();
       _product(Token::LAMBDA, sym);
     }
-}
+  }
 
-public:
-  Lexer(SymbolT const* input) :
-    _input(input)
-  {}
-
-  void tokenize()
+  void _tokenize()
   {
     while (!_ended)
     {
       _tokenizeCurrent();
       _next();
     }
-  }
-
-  std::list<Token> const& collect() const
-  {
-    return _tokenList;
   }
 };
 

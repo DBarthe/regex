@@ -29,6 +29,8 @@
 #include "Token.h"
 #include "Lexer.h"
 
+#include "NPIConvertor.h"
+
 template <typename SymbolT>
 class NFABuilder
 {
@@ -298,13 +300,13 @@ private:
     }
   }
 
-
   void _tokenize(SymbolT const* expr)
   {
-    Lexer<SymbolT> lexer(expr);
-    lexer.tokenize();
-    _workspace->tokens.reserve(lexer.collect().size());
-    for (auto token : lexer.collect())
+    std::list<Token> lexerOutput;
+    Lexer<SymbolT> lexer(expr, lexerOutput);
+
+    _workspace->tokens.reserve(lexerOutput.size());
+    for (auto token : lexerOutput)
     {
       _workspace->tokens.push_back(token);
     }

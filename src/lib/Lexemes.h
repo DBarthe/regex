@@ -22,6 +22,8 @@
 #ifndef LEXEMES_H
 #define LEXEMES_H
 
+#include <string>
+
 template <typename SymbolT>
 class Lexemes
 {
@@ -37,6 +39,7 @@ public:
   Lexemes(Lexemes const&) = delete;
   void operator=(Lexemes const&) = delete;
 
+  static std::string toString(SymbolT);
 };
 
 #endif // LEXEMES_H

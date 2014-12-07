@@ -21,8 +21,13 @@
 
 #include <iostream>
 #include <cassert>
+#include <list>
 
 #include "NFA.h"
+#include "Regex.h"
+#include "Lexer.h"
+#include "NPIConvertor.h"
+#include "Token.h"
 
 // this function doesn't free data.
 void testNFA()
@@ -141,11 +146,67 @@ void testNFA()
   }
 }
 
+typedef Token<char> TokenC;
+
+static bool compareTokenCList(std::list<TokenC>const& l1, std::list<TokenC>const& l2)
+{
+  if (l1.size() != l2.size())
+  {
+    return false;
+  }
+
+  for (auto it1 = l1.begin(), it2 = l2.begin();
+      it1 != l1.end(); it1++, it2++)
+  {
+    if (it1->getLabel() != it2->getLabel())
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+static void showTokenList(std::list<TokenC> const& l)
+{
+  for (auto token : l)
+  {
+    std::cout << token.toString() << " ";
+  }
+  std::cout << std::endl;
+}
+
+void testLexer()
+{
+  std::cout << "Testing Lexer ..." << std::endl;
+
+  Lexer<char> lexer1("to");
+  std::list<TokenC> l1 {
+    TokenC(TokenC::LAMBDA), TokenC(TokenC::CONCAT),
+    TokenC(TokenC::LAMBDA), TokenC(TokenC::END)
+  };
+  assert(compareTokenCList(lexer1.collect(), l1));
+
+  Lexer<char> lexer2("a(b|c)*d");
+  std::list<TokenC> l2 {
+    TokenC(TokenC::LAMBDA), TokenC(TokenC::CONCAT), TokenC(TokenC::LEFT_PARENTH),
+    TokenC(TokenC::LAMBDA), TokenC(TokenC::OR), TokenC(TokenC::LAMBDA),
+    TokenC(TokenC::RIGHT_PARENTH), TokenC(TokenC::STAR), TokenC(TokenC::CONCAT),
+    TokenC(TokenC::LAMBDA), TokenC(TokenC::END)
+  };
+  assert(compareTokenCList(lexer2.collect(), l2));
+
+}
+
+void testNPIConvertor()
+{
+
+}
 
 int main(int argc, char const *argv[])
 {
   std::cout << "Let's test every classes one by one :" << std::endl;
   testNFA();
+  testLexer();
   std::cout << "All the tests passed with success !!!" << std::endl;
   return 0;
 }

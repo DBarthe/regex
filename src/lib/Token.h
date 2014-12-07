@@ -60,16 +60,19 @@ public:
     return _value;
   }
 
-  bool operator==(Label label) const
+  std::string toString() const
   {
-    return _label == label;
+    switch (_label)
+    {
+      case STAR: return "*";
+      case OR: return "|";
+      case LEFT_PARENTH: return "(";
+      case RIGHT_PARENTH: return ")";
+      case CONCAT: return ".";
+      case END: return "[END]";
+      case LAMBDA: return Lexemes<SymbolT>::toString(_value);
+    }
   }
-
-  bool operator!=(Label label)
-  {
-    return !operator==(label);
-  }
-
 };
 
 #endif // TOKEN_H

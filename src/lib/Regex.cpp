@@ -41,6 +41,12 @@ template<>
 char const Lexemes<char>::END = '\0';
 
 template<>
+std::string Lexemes<char>::toString(char sym)
+{
+  return std::string(1, sym);
+}
+
+template<>
 template<>
 wchar_t const* WRegex::arrayOfCustom(std::wstring const& str)
 {
