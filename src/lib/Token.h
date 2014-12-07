@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2014 Barthelemy Delemotte
+// Copyright (c) 2014 Delemotte Barthelemy
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -19,24 +19,57 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef LEXEMES_H
-#define LEXEMES_H
+#ifndef TOKEN_H
+#define TOKEN_H
+
+#include <list>
+
+#include "Lexemes.h"
 
 template <typename SymbolT>
-class Lexemes
+class Token
 {
 public:
-  static SymbolT const STAR;
-  static SymbolT const OR;
-  static SymbolT const LEFT_PARENTH;
-  static SymbolT const RIGHT_PARENTH;
-  static SymbolT const END;
+  enum Label
+  {
+    STAR,
+    OR,
+    LEFT_PARENTH,
+    RIGHT_PARENTH,
+    CONCAT,
+    END,
+    LAMBDA
+  };
+
+private:
+  Label _label;
+  SymbolT _value;
 
 public:
-  Lexemes() = delete;
-  Lexemes(Lexemes const&) = delete;
-  void operator=(Lexemes const&) = delete;
+  Token(Label label, SymbolT value=Lexemes<SymbolT>::END) :
+    _label(label), _value(value)
+  {}
+
+  Label getLabel() const
+  {
+    return _label;
+  }
+
+  SymbolT getValue() const
+  {
+    return _value;
+  }
+
+  bool operator==(Label label) const
+  {
+    return _label == label;
+  }
+
+  bool operator!=(Label label)
+  {
+    return !operator==(label);
+  }
 
 };
 
-#endif // LEXEMES_H
+#endif // TOKEN_H

@@ -30,15 +30,15 @@ char const* Regex::arrayOfCustom(std::string const& str)
 }
 
 template<>
-char const Lexemes<char>::starSymbol = '*';
+char const Lexemes<char>::STAR = '*';
 template<>
-char const Lexemes<char>::orSymbol = '|';
+char const Lexemes<char>::OR = '|';
 template<>
-char const Lexemes<char>::openParenthSymbol = '(';
+char const Lexemes<char>::LEFT_PARENTH = '(';
 template<>
-char const Lexemes<char>::closeParenthSymbol = ')';
+char const Lexemes<char>::RIGHT_PARENTH = ')';
 template<>
-char const Lexemes<char>::endSymbol = '\0';
+char const Lexemes<char>::END = '\0';
 
 template<>
 template<>
@@ -48,12 +48,12 @@ wchar_t const* WRegex::arrayOfCustom(std::wstring const& str)
 }
 
 template<>
-wchar_t const Lexemes<wchar_t>::starSymbol = '*';
+wchar_t const Lexemes<wchar_t>::STAR = '*';
 template<>
-wchar_t const Lexemes<wchar_t>::orSymbol = '|';
+wchar_t const Lexemes<wchar_t>::OR = '|';
 template<>
-wchar_t const Lexemes<wchar_t>::openParenthSymbol = '(';
+wchar_t const Lexemes<wchar_t>::LEFT_PARENTH = '(';
 template<>
-wchar_t const Lexemes<wchar_t>::closeParenthSymbol = ')';
+wchar_t const Lexemes<wchar_t>::RIGHT_PARENTH = ')';
 template<>
-wchar_t const Lexemes<wchar_t>::endSymbol = '\0';
+wchar_t const Lexemes<wchar_t>::END = '\0';

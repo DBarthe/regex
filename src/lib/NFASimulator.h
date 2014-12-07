@@ -140,7 +140,7 @@ public:
   {
     _cleanUp();
     _init(nfa);
-    for (size_t i = 0; input[i] != Lexemes<SymbolT>::endSymbol; i++)
+    for (size_t i = 0; input[i] != Lexemes<SymbolT>::END; i++)
     {
       SymbolT current = input[i];
       _expand(current);
