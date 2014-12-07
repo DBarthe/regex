@@ -194,12 +194,25 @@ void testLexer()
     TokenC(TokenC::LAMBDA), TokenC(TokenC::END)
   };
   assert(compareTokenCList(lexer2.collect(), l2));
-
 }
 
 void testNPIConvertor()
 {
+  std::cout << "Testing npiConvertor ..." << std::endl;
 
+  Lexer<char> lexer("a*(b|(cd|e)*)*|f");
+
+  NPIConvertor<char> npiConvertor(lexer.collect());
+
+  std::list<TokenC> l {
+    TokenC(TokenC::LAMBDA), TokenC(TokenC::STAR), TokenC(TokenC::LAMBDA),
+    TokenC(TokenC::LAMBDA), TokenC(TokenC::LAMBDA), TokenC(TokenC::LAMBDA),
+    TokenC(TokenC::OR), TokenC(TokenC::CONCAT), TokenC(TokenC::STAR),
+    TokenC(TokenC::OR), TokenC(TokenC::STAR), TokenC(TokenC::LAMBDA),
+    TokenC(TokenC::OR), TokenC(TokenC::CONCAT)
+  };
+
+  assert(compareTokenCList(npiConvertor.collect(), l));
 }
 
 int main(int argc, char const *argv[])
@@ -207,6 +220,7 @@ int main(int argc, char const *argv[])
   std::cout << "Let's test every classes one by one :" << std::endl;
   testNFA();
   testLexer();
+  testNPIConvertor();
   std::cout << "All the tests passed with success !!!" << std::endl;
   return 0;
 }
