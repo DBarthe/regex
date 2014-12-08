@@ -31,6 +31,11 @@ class Lexer
 private:
   typedef Token<SymbolT> Token;
 
+  SymbolT const* _input;
+  std::list<Token>& _tokenList;
+  size_t _index = 0;
+  bool _ended = false;
+  
 public:
   Lexer(SymbolT const* input, std::list<Token>& output) :
     _input(input), _tokenList(output)
@@ -52,12 +57,6 @@ public:
     return _tokenList;
   }
 
-private:
-  SymbolT const* _input;
-  std::list<Token>& _tokenList;
-  size_t _index = 0;
-  bool _ended = false;
-  
 private:
   SymbolT _current() const
   {

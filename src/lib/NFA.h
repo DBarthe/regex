@@ -39,9 +39,6 @@ typedef std::set<StateId> StateSet;
 template <typename SymbolT>
 class NFA
 {
-public:
-  // public types
-
 private:
   // private types
   // sub-types
@@ -63,34 +60,8 @@ private:
 
   StateSet const _emptyConstSet;
 
-private:
-  // privates methods
-  void _maybeIncreaseCapacity()
-  {
-    if (_transTable.size() == _transTable.capacity())
-    {
-      _increaseCapacity();
-    }
-  }
-
-  void _increaseCapacity() {
-    size_t newCapacity = _transTable.capacity() + _CHUNK_SIZE;
-    _transTable.reserve(newCapacity);
-  }
-
-  bool _exists(StateId id) const
-  {
-    return id < _nextState;
-  }
-
-  static bool _isElement(StateSet const& set, StateId id)
-  {
-    return set.find(id) != set.end();
-  }
-
 public:
   // ctor and dtor
-
   NFA() :
     _initialState(0),
     _nextState(0),
@@ -316,7 +287,6 @@ public:
         }        
       }
     }
-
     return resultSet;
   }
 
@@ -392,6 +362,30 @@ public:
     }
   }
 
+private:
+  // privates methods
+  void _maybeIncreaseCapacity()
+  {
+    if (_transTable.size() == _transTable.capacity())
+    {
+      _increaseCapacity();
+    }
+  }
+
+  void _increaseCapacity() {
+    size_t newCapacity = _transTable.capacity() + _CHUNK_SIZE;
+    _transTable.reserve(newCapacity);
+  }
+
+  bool _exists(StateId id) const
+  {
+    return id < _nextState;
+  }
+
+  static bool _isElement(StateSet const& set, StateId id)
+  {
+    return set.find(id) != set.end();
+  }
 };
 
 #endif // NFA_H

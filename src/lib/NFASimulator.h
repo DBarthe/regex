@@ -39,6 +39,21 @@ private:
 
   NFA<SymbolT> const* _nfa = nullptr;
 
+public:
+  NFASimulator() = default;
+  ~NFASimulator() = default;
+
+  bool simulate(NFA<SymbolT> const& nfa, SymbolT const* input)
+  {
+    _cleanUp();
+    _init(nfa);
+    for (size_t i = 0; input[i] != Lexemes<SymbolT>::END; i++)
+    {
+      SymbolT current = input[i];
+      _expand(current);
+    }
+    return _isAccepted();
+  }
 
 private:
   void _cleanUp()
@@ -130,22 +145,6 @@ private:
       _oldStates.pop();
     }
     return false;
-  }
-
-public:
-  NFASimulator() = default;
-  ~NFASimulator() = default;
-
-  bool simulate(NFA<SymbolT> const& nfa, SymbolT const* input)
-  {
-    _cleanUp();
-    _init(nfa);
-    for (size_t i = 0; input[i] != Lexemes<SymbolT>::END; i++)
-    {
-      SymbolT current = input[i];
-      _expand(current);
-    }
-    return _isAccepted();
   }
 };
 

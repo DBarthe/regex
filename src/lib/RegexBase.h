@@ -29,10 +29,14 @@
 template <typename SymbolT>
 class RegexBase
 {
+private:
+  NFA<SymbolT> _nfa;
+
 public:
-  RegexBase(SymbolT const* expr) :
-    _builder(expr)
-  {}
+  RegexBase(SymbolT const* expr)
+  {
+    NFABuilder<SymbolT> builder(expr, _nfa);
+  }
 
   template <typename T>
   RegexBase(T const& customExpr) :
@@ -44,7 +48,7 @@ public:
   bool match(SymbolT const* input) const
   {
     NFASimulator<SymbolT> simulator;
-    return simulator.simulate(_builder.collect(), input);
+    return simulator.simulate(_nfa, input);
   }
 
   template <typename T>
@@ -54,9 +58,12 @@ public:
 
 private:
   template <typename T>
-  static SymbolT const* arrayOfCustom(T const& custom) { return nullptr; }
+  static SymbolT const* arrayOfCustom(T const& custom)
+  {
+    assert(false /* unimplemented */);
+    return nullptr;
+  }
 
-  NFABuilder<SymbolT> _builder;
 };
 
 #endif // REGEX_BASE_H
