@@ -22,6 +22,8 @@
 #ifndef LEXER_H
 #define LEXER_H
 
+#include <map>
+
 #include "Lexemes.h"
 #include "Token.h"
 
@@ -34,7 +36,6 @@ private:
   SymbolT const* _input;
   std::list<Token>& _tokenList;
   size_t _index = 0;
-  bool _ended = false;
   
 public:
   Lexer(SymbolT const* input, std::list<Token>& output) :
@@ -112,29 +113,25 @@ private:
 
   void _tokenizeCurrent()
   {
+    static const std::map<SymbolT, typename Token::Label> table {
+      { Lexemes<SymbolT>::STAR, Token::STAR },
+      { Lexemes<SymbolT>::OR, Token::OR },
+      { Lexemes<SymbolT>::PLUS, Token::PLUS },
+      { Lexemes<SymbolT>::LEFT_PARENTH, Token::LEFT_PARENTH },
+      { Lexemes<SymbolT>::RIGHT_PARENTH, Token::RIGHT_PARENTH },
+    };
+
     SymbolT sym = _current();
 
-    if (sym == Lexemes<SymbolT>::END)
-    {
-      _product(Token::END);
-      _ended = true;
-    }
-    else if (sym == Lexemes<SymbolT>::STAR)
-    {
-      _product(Token::STAR);
-    }
-    else if (sym == Lexemes<SymbolT>::OR)
-    {
-      _product(Token::OR);
-    }
-    else if (sym == Lexemes<SymbolT>::LEFT_PARENTH)
+    if (sym == Lexemes<SymbolT>::LEFT_PARENTH)
     {
       _maybeAddConcat();
-      _product(Token::LEFT_PARENTH);
     }
-    else if (sym == Lexemes<SymbolT>::RIGHT_PARENTH)
+
+    auto const& it = table.find(sym);
+    if (it != table.end())
     {
-      _product(Token::RIGHT_PARENTH);
+      _product(it->second);
     }
     else
     {
@@ -145,11 +142,12 @@ private:
 
   void _tokenize()
   {
-    while (!_ended)
+    while (_current() != Lexemes<SymbolT>::END)
     {
       _tokenizeCurrent();
       _next();
     }
+    _product(Token::END);
   }
 };
 
