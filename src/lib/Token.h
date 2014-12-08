@@ -37,6 +37,7 @@ public:
     LEFT_PARENTH,
     RIGHT_PARENTH,
     CONCAT,
+    OPTION,
     PLUS,
     END,
     LAMBDA
@@ -68,6 +69,7 @@ public:
       case STAR: return "*";
       case OR: return "|";
       case PLUS: return "+";
+      case OPTION: return "?";
       case LEFT_PARENTH: return "(";
       case RIGHT_PARENTH: return ")";
       case CONCAT: return ".";

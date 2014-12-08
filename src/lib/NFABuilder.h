@@ -156,6 +156,23 @@ private:
     _stack.push(&res);
   }
 
+  NFA<SymbolT>& _createAlwaysAcceptNFA() const
+  {
+    auto& nfa = *new NFA<SymbolT>;
+    auto state = nfa.addState();
+    nfa.setAcceptor(state);
+    nfa.addEpsilonTransition(nfa.getInitial(), state);
+    return nfa;
+  }
+
+  void _treatOption()
+  {
+    auto& oneTime = _safePop();
+    auto& zeroTime = _createAlwaysAcceptNFA();
+    auto& res = _orInduction(oneTime, zeroTime);
+    _stack.push(&res);
+  }
+
   NFA<SymbolT>& _concatInduction(NFA<SymbolT>& left, NFA<SymbolT>& right) const
   {
     auto newInitial = right.addState();
@@ -195,6 +212,7 @@ private:
       case Token::STAR:           _treatStar();         break;
       case Token::OR:             _treatOr();           break;
       case Token::PLUS:           _treatPlus();         break;
+      case Token::OPTION:         _treatOption();       break;
       case Token::CONCAT:         _treatConcat();       break;
       case Token::LAMBDA:         _treatLambda(token);  break;
       default:

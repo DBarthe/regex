@@ -31,6 +31,7 @@ public:
   static SymbolT const STAR;
   static SymbolT const PLUS;
   static SymbolT const OR;
+  static SymbolT const OPTION;
   static SymbolT const LEFT_PARENTH;
   static SymbolT const RIGHT_PARENTH;
   static SymbolT const END;

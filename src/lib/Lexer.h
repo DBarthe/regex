@@ -102,10 +102,13 @@ private:
 
   void _maybeAddConcat()
   {
+    static const std::set<typename Token::Label> concerned {
+      Token::LAMBDA, Token::STAR, Token::RIGHT_PARENTH,
+      Token::PLUS, Token::OPTION
+    };
     typename Token::Label label = _tokenList.back().getLabel();
 
-    if ( label == Token::LAMBDA || label == Token::STAR
-                                || label == Token::RIGHT_PARENTH)
+    if (concerned.count(label) == 1)
     { 
       _product(Token::CONCAT);
     }
@@ -119,6 +122,7 @@ private:
       { Lexemes<SymbolT>::PLUS, Token::PLUS },
       { Lexemes<SymbolT>::LEFT_PARENTH, Token::LEFT_PARENTH },
       { Lexemes<SymbolT>::RIGHT_PARENTH, Token::RIGHT_PARENTH },
+      { Lexemes<SymbolT>::OPTION, Token::OPTION },
     };
 
     SymbolT sym = _current();
