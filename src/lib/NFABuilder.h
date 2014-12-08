@@ -23,12 +23,13 @@
 #define NFA_BUILDER_H
 
 #include <stack>
+#include <list>
 #include <stdexcept>
+#include <string>
 
 #include "NFA.h"
 #include "Token.h"
 #include "Lexer.h"
-
 #include "NPIConvertor.h"
 
 template <typename SymbolT>
@@ -37,71 +38,57 @@ class NFABuilder
 private:
   typedef Token<SymbolT> Token;
 
-  NFA<SymbolT> _nfa;
+  NFA<SymbolT>& _nfa;
+  std::list<Token> _npi;
+  std::stack<NFA<SymbolT>*> _stack;
 
-  struct Workspace
+public:
+  NFABuilder(SymbolT const* expr, NFA<SymbolT>& nfa) :
+    _nfa(nfa)
   {
-    ~Workspace()
+    try
     {
-      while (!nfaStack.empty())
-      {
-        delete nfaStack.top();
-        nfaStack.pop();
-      }
+      _build(expr);
     }
+    catch (std::invalid_argument e)
+    {
+      _cleanUp();
+      throw e;
+    }
+  }
 
-    std::stack<Token> operatorStack;
-    std::stack<NFA<SymbolT>*> nfaStack;
-    std::vector<Token> tokens;
-    size_t index;
-  };
+  NFABuilder(SymbolT const *expr) :
+    NFABuilder(expr, *new NFA<SymbolT>)
+  {}
 
-  Workspace* _workspace;
+  ~NFABuilder()
+  {
+    _cleanUp();
+  }
+
+  NFA<SymbolT>& collect()
+  {
+    return _nfa;
+  }
+
+  NFA<SymbolT> const& collect() const
+  {
+    return _nfa;
+  }
 
 private:
-  NFA<SymbolT>& _popNFA()
+  NFA<SymbolT>& _safePop(std::string const& errMsg="syntax error")
   {
-    if (_workspace->nfaStack.empty())
+    if (_stack.empty())
     {
-      throw std::invalid_argument ("NFABuilder: syntax error");
+      throw std::invalid_argument (errMsg);
     }
     else
     {
-      NFA<SymbolT>* nfa = _workspace->nfaStack.top();
-      _workspace->nfaStack.pop();
-      return *nfa;
+      auto& nfa = *_stack.top();
+      _stack.pop();
+      return nfa;
     }
-  }
-
-  void _pushNFA(NFA<SymbolT>& nfa)
-  {
-    _workspace->nfaStack.push(&nfa);
-  }
-
-  Token _popOperator()
-  {
-    if (_workspace->operatorStack.empty())
-    {
-      throw std::invalid_argument ("NFABuilder: syntax error");
-    }
-    else
-    {
-      Token op = _workspace->operatorStack.top();
-      _workspace->operatorStack.pop();
-      return op;
-    }
-  }
-
-  void _pushOperator(Token op)
-  {
-    _treatStackedOperators(
-      [this]()
-      {
-
-        return Token::END;
-
-      });
-    _workspace->operatorStack.push(op);
   }
 
   NFA<SymbolT>& _starInduction(NFA<SymbolT>& operand) const
@@ -128,6 +115,13 @@ private:
     return operand;
   }
 
+  void _treatStar()
+  {
+    auto& operand = _safePop();
+    auto& result = _starInduction(operand);
+    _stack.push(&result);
+  }
+
   NFA<SymbolT>& _orInduction(NFA<SymbolT>& left, NFA<SymbolT>& right) const
   {
     auto& result = *new NFA<SymbolT>;
@@ -144,7 +138,16 @@ private:
     return result;
   }
 
-  NFA<SymbolT>& _concatInduction(NFA<SymbolT>& left, NFA<SymbolT>& right)
+  void _treatOr()
+  {
+    auto& rightNFA = _safePop();
+    auto& leftNFA = _safePop();
+
+    auto& res = _orInduction(leftNFA, rightNFA);
+    _stack.push(&res);
+  }
+
+  NFA<SymbolT>& _concatInduction(NFA<SymbolT>& left, NFA<SymbolT>& right) const
   {
     auto newInitial = right.addState();
     right.insert(left, newInitial, right.getInitial());
@@ -153,7 +156,16 @@ private:
     return right;
   }
 
-  NFA<SymbolT>& _baseCase(SymbolT symbol) const
+  void _treatConcat()
+  {
+    auto& rightNFA = _safePop();
+    auto& leftNFA = _safePop();
+
+    auto& res = _concatInduction(leftNFA, rightNFA);
+    _stack.push(&res);
+  }
+
+  NFA<SymbolT>& _createSimpleNFA(SymbolT symbol) const
   {
     auto& result = *new NFA<SymbolT>;
     auto out = result.addState();
@@ -162,194 +174,70 @@ private:
     return result;
   }
 
-  void _treatStar()
+  void _treatLambda(Token token)
   {
-    NFA<SymbolT>& operand = _popNFA();
-    NFA<SymbolT>& result = _starInduction(operand);
-    _pushNFA(result);
+    _stack.push(&_createSimpleNFA(token.getValue()));
   }
 
-  void _treatOr()
+  void _shunt(Token token)
   {
-    _pushOperator(Token(Token::OR));
-  }
-
-  void _treatOpenParenth()
-  {
-    _pushOperator(Token(Token::LEFT_PARENTH));
-  }
-
-  void _treatStackedOperators(
-    std::function<typename Token::Label ()> succFunc)
-  {
-    typename Token::Label label;
-
-    while ((label = succFunc()) != Token::END)
-    {
-      switch (label)
-      {
-        case Token::OR:
-        {
-          NFA<SymbolT>& rOperand = _popNFA();
-          NFA<SymbolT>& lOperand = _popNFA();
-          NFA<SymbolT>& result = _orInduction(lOperand, rOperand);
-          _pushNFA(result);
-        }
-        break;
-  
-        case Token::CONCAT:
-        {
-          NFA<SymbolT>& rOperand = _popNFA();
-          NFA<SymbolT>& lOperand = _popNFA();
-          NFA<SymbolT>& result = _concatInduction(lOperand, rOperand);
-          _pushNFA(result);
-        }
-        break;
-
-        default:
-          throw std::invalid_argument ("NFABuilder: syntax error");
-      }
-    }
-  }
-
-  void _treatCloseParenth()
-  {
-    _treatStackedOperators(
-      [this]() {
-        Token op = _popOperator();
-        return op.getLabel() == Token::LEFT_PARENTH
-          ? Token::END
-          : op.getLabel();
-      });
-  }
-
-  void _treatConcat() {}
-
-  void _treatLambda()
-  {
-    NFA<SymbolT>& simpleNFA = _baseCase(_current().getValue());
-    _pushNFA(simpleNFA);
-  }
-
-  Token _current() const
-  {
-    return _workspace->tokens[_workspace->index];
-  }
-
-  Token _next() const
-  {
-    return _ended()
-      ? _current()
-      :  _workspace->tokens[_workspace->index + 1];
-  }
-
-  bool _ended() const
-  {
-    return _current().getLabel() == Token::END;
-  }
-
-  void _forward()
-  {
-    _workspace->index++;
-  }
-
-  void _start()
-  {
-    _workspace->index = 0;
-  }
-
-  void _shunt()
-  {
-    switch (_current().getLabel())
+    switch (token.getLabel())
     {
       case Token::STAR:           _treatStar();         break;
       case Token::OR:             _treatOr();           break;
-      case Token::LEFT_PARENTH:   _treatOpenParenth();  break;
-      case Token::RIGHT_PARENTH:  _treatCloseParenth(); break;
       case Token::CONCAT:         _treatConcat();       break;
-      case Token::LAMBDA:         _treatLambda();       break;
-      default:;
+      case Token::LAMBDA:         _treatLambda(token);       break;
+      default:
+        assert (false); // unreachable, it's a bug otherwise
+        throw std::invalid_argument("It's not a bug, it's a feature ... :s");
     }
   }
 
-  void _unloadOperatorStack()
+  void _buildNPI(SymbolT const* expr)
   {
-    _treatStackedOperators(
-      [this]() {
-        if (_workspace->operatorStack.empty())
-        {
-          return Token::END;
-        }
-        else
-        {
-          return _popOperator().getLabel();
-        }
-      });
+    std::list<Token> tokens;
+    Lexer<SymbolT> lexer(expr, tokens);
+    NPIConvertor<SymbolT> convertor(tokens, _npi);
   }
 
-  void _finalNFAConcat()
+  void _buildResult()
   {
-    _nfa.setAcceptor(_nfa.getInitial());
-    while (!_workspace->nfaStack.empty())
+    auto acceptor = _nfa.addState();
+    _nfa.setAcceptor(acceptor);
+    if (_stack.empty())
     {
-      auto& current = _popNFA();
-      auto newInitial = _nfa.addState();
-      _nfa.insert(current, newInitial, _nfa.getInitial());
-      _nfa.replaceInitial(newInitial);
-      delete &current;
+      _nfa.addEpsilonTransition(_nfa.getInitial(), acceptor);
     }
-  }
-
-  void _tokenize(SymbolT const* expr)
-  {
-    std::list<Token> lexerOutput;
-    Lexer<SymbolT> lexer(expr, lexerOutput);
-
-    _workspace->tokens.reserve(lexerOutput.size());
-    for (auto token : lexerOutput)
+    else if (_stack.size() == 1)
     {
-      _workspace->tokens.push_back(token);
+      auto& lastNFA = *_stack.top();
+      _nfa.insert(lastNFA, _nfa.getInitial(), acceptor);
+    }
+    else
+    {
+      throw std::invalid_argument("missing operator(s)");
     }
   }
 
   void _build(SymbolT const* expr)
   {
-    _tokenize(expr);
-    for (_start(); !_ended(); _forward())
+    _buildNPI(expr);
+
+    for (auto token : _npi)
     {
-      _shunt();
+      _shunt(token);
     }
-    _unloadOperatorStack();
-    _finalNFAConcat();
+
+    _buildResult();
   }
 
-public:
-  NFABuilder(SymbolT const* expr) :
-    _nfa(), _workspace(new Workspace())
+  void _cleanUp()
   {
-    try
+    while (!_stack.empty())
     {
-      _build(expr);
-      delete _workspace;
-      _workspace = nullptr;
+      delete _stack.top();
+      _stack.pop();
     }
-    catch (std::invalid_argument e)
-    {
-      delete _workspace;
-      throw e;
-    }
-  }
-
-  ~NFABuilder() = default;
-
-  NFA<SymbolT>& collect()
-  {
-    return _nfa;
-  }
-
-  NFA<SymbolT> const& collect() const
-  {
-    return _nfa;
   }
 };
 
