@@ -70,7 +70,7 @@ private:
     static const std::vector<std::set<typename Token::Label>> table {
       { Token::CONCAT },
       { Token::OR },
-      { Token::STAR }
+      { Token::STAR, Token::PLUS }
     };
 
     size_t res = 0;
@@ -96,10 +96,10 @@ private:
   static Fixity _getFixity(typename Token::Label o)
   {
     static std::set<typename Token::Label> rightSet {
-      Token::CONCAT, Token::OR, Token::STAR
+      Token::CONCAT, Token::OR, Token::STAR, Token::PLUS
     };
     static std::set<typename Token::Label> leftSet {
-      Token::CONCAT, Token::OR, Token::STAR
+      Token::CONCAT, Token::OR, Token::STAR, Token::PLUS
     };
 
     bool r = rightSet.count(o) == 1;

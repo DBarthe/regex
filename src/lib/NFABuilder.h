@@ -147,6 +147,15 @@ private:
     _stack.push(&res);
   }
 
+  void _treatPlus()
+  {
+    auto& operand = _safePop();
+    auto& clone = *new NFA<SymbolT>(operand);
+    auto& star = _starInduction(operand);
+    auto& res = _concatInduction(clone, star);
+    _stack.push(&res);
+  }
+
   NFA<SymbolT>& _concatInduction(NFA<SymbolT>& left, NFA<SymbolT>& right) const
   {
     auto newInitial = right.addState();
@@ -185,8 +194,9 @@ private:
     {
       case Token::STAR:           _treatStar();         break;
       case Token::OR:             _treatOr();           break;
+      case Token::PLUS:           _treatPlus();         break;
       case Token::CONCAT:         _treatConcat();       break;
-      case Token::LAMBDA:         _treatLambda(token);       break;
+      case Token::LAMBDA:         _treatLambda(token);  break;
       default:
         assert (false); // unreachable, it's a bug otherwise
         throw std::invalid_argument("It's not a bug, it's a feature ... :s");

@@ -34,6 +34,8 @@ char const Lexemes<char>::STAR = '*';
 template<>
 char const Lexemes<char>::OR = '|';
 template<>
+char const Lexemes<char>::PLUS = '+';
+template<>
 char const Lexemes<char>::LEFT_PARENTH = '(';
 template<>
 char const Lexemes<char>::RIGHT_PARENTH = ')';
@@ -57,6 +59,8 @@ template<>
 wchar_t const Lexemes<wchar_t>::STAR = '*';
 template<>
 wchar_t const Lexemes<wchar_t>::OR = '|';
+template<>
+wchar_t const Lexemes<wchar_t>::PLUS = '+';
 template<>
 wchar_t const Lexemes<wchar_t>::LEFT_PARENTH = '(';
 template<>
